@@ -1,18 +1,17 @@
+
 import { User } from "src/users/entity/users.entity";
 import { Entity, BaseEntity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
 
 @Entity()
 export class FriendshipRequest extends BaseEntity {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+  
+  @Column()
+  senderId: string;
 
-  @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'senderId' })
-  sender: User;
-
-  @ManyToOne(() => User, { eager: true })
-  @JoinColumn({ name: 'receiverId' })
-  receiver: User;
+  @Column()
+  receiverId: string;
 
   @Column({ default: 'pending' })
   status: FriendshipStatus;

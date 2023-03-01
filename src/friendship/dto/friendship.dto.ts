@@ -7,11 +7,11 @@ export class CreateFriendshipDto{
 
     @IsNotEmpty()
     @IsUUID()
-    senderId: User;
+    senderId: string;
   
     @IsNotEmpty()
     @IsUUID()
-    receiverId: User;
+    receiverId: string;
   
 
 }
