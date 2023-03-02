@@ -7,6 +7,9 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
+    getUserByEmail(email: string) {
+        throw new Error('Method not implemented.');
+    }
     constructor(
         @InjectRepository(User)
         private userRepository: Repository<User>
@@ -24,4 +27,9 @@ export class UsersService {
     async findById(id: any): Promise<User> {
         return await this.userRepository.findOneById(id)
     }
+
+    async findByEmail(email: string): Promise<User> {
+        return await this.userRepository.findOne({where:{email: email}})
+    }
+
 }

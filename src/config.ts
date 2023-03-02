@@ -24,13 +24,17 @@ export const DATABASE = {
 //   password: process.env.SMTP_PASSWORD!,
 // };
 
-// export const GOOGLE_AUTHENTICATION = {
-//   clientId: process.env.GOOGLE_CLIENT_ID,
-//   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-// };
+export const GOOGLE_AUTHENTICATION = {
+   clientId: process.env.GOOGLE_CLIENT_ID,
+   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+ };
 
 // export const GOOGLE_CALLBACK_URL = {
-//   googleCustomerCallBackUrl: process.env.GOOGLE_CUSTOMER_CALLBACK_URL,
-//   googleSellerCallBackUrl: process.env.GOOGLE_SELLER_CALLBACK_URL,
-//   googleRiderCallBackUrl: process.env.GOOGLE_RIDER_CALLBACK_URL,
-// };
+//    googleCustomerCallBackUrl: process.env.GOOGLE_CUSTOMER_CALLBACK_URL,
+//    googleSellerCallBackUrl: process.env.GOOGLE_SELLER_CALLBACK_URL,
+//    googleRiderCallBackUrl: process.env.GOOGLE_RIDER_CALLBACK_URL,
+//  };
+
+export const GOOGLE_CALLBACK_URL = {
+  googleCallBackUrl: process.env.GOOGLE_CALLBACK_URL
+}
