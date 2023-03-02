@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Injectable } from '@nestjs/common';
+import { BadRequestException, Body, Injectable, Request } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
@@ -15,8 +15,9 @@ export class FriendshipService {
     ){}
 
 
-    async sendRequest(payload: CreateFriendshipDto): Promise<FriendshipRequest>{
-        const {senderId, receiverId} = payload;
+    async sendRequest(userId:string,payload: CreateFriendshipDto): Promise<FriendshipRequest>{
+        const senderId = userId;
+        const {receiverId} = payload;
 
         if(senderId === receiverId){
           throw new BadRequestException("Sender and receiver cannot be same");
@@ -29,8 +30,9 @@ export class FriendshipService {
         if(!sender || !receiver) throw new BadRequestException("Sender or receiver not valid") //throw error if it does
 
         //Check if freindship already exists
-        const existingFriendship = this.friendshipRepository.findOne({where:[{senderId, receiverId}, {senderId:receiverId, receiverId:senderId}]});
-        if(existingFriendship){
+        const existingFriendship1 = await this.friendshipRepository.findOne({where: {senderId, receiverId, status: FriendshipStatus.pending}});
+        const existingFriendship2 = await this.friendshipRepository.findOne({where: {senderId: receiverId, receiverId: senderId, status: FriendshipStatus.pending}});
+        if (existingFriendship1 || existingFriendship2) {
           throw new BadRequestException("Request already exists");
         }
 

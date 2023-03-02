@@ -4,14 +4,9 @@ import { User } from "src/users/entity/users.entity";
 
 
 export class CreateFriendshipDto{
-
-    @IsNotEmpty()
-    @IsUUID()
-    senderId: string;
   
     @IsNotEmpty()
     @IsUUID()
     receiverId: string;
-  
 
 }

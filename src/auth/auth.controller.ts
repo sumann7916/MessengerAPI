@@ -2,11 +2,15 @@ import { Controller, Post, UseGuards, Request,Get,Response, Res } from '@nestjs/
 import { GoogleAuthGuard } from 'src/@guards/google.guards';
 import { JwtGuard } from 'src/@guards/jwt.guards';
 import { LocalAuthGuard } from 'src/@guards/local.guards';
+import { UsersService } from 'src/users/users.service';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService){}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly userService: UsersService
+        ){}
 
     @UseGuards(LocalAuthGuard)
     @Post('/login')
@@ -18,7 +22,6 @@ export class AuthController {
     @UseGuards(JwtGuard)
     @Get('/user')
     async getUser(@Request() req):Promise<any>{
-        console.log(req.user);
         return{
         id: req.user.id,
         email: req.user.email}
@@ -32,9 +35,13 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     @Get('/google/callback')
     async callback(@Request() req, @Res() res){
-        const jwt = await this.authService.generateToken(req.user);
+
+        const user =await this.userService.findByEmail(req.user.email)
+        const jwt = await this.authService.generateToken(user);
         res.set('authorization', jwt.access_token);
-        res.json(req.user)
+        console.log(user);
+        
+        res.json(user)
 
     }
 
