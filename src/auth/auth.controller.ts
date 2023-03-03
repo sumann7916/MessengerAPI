@@ -39,7 +39,6 @@ export class AuthController {
         const user =await this.userService.findByEmail(req.user.email)
         const jwt = await this.authService.generateToken(user);
         res.set('authorization', jwt.access_token);
-        console.log(user);
         
         res.json(user)
 
