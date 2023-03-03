@@ -10,3 +10,9 @@ export class CreateFriendshipDto{
     receiverId: string;
 
 }
+
+export class AcceptFriendshipDto {
+    @IsNotEmpty()
+    @IsUUID()
+    id:string
+}
