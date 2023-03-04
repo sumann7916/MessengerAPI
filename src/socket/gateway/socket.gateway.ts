@@ -58,7 +58,7 @@ export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGate
             
 
             //Get User
-            const user = await this.userService.findById(decodedToken.sub);
+            const user:User = await this.userService.findById(decodedToken.sub);
             
 
             if(!user) {
@@ -78,16 +78,6 @@ export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
       }
 
-      async handleDisconnect(client: any) {
-          
-      }
-    //Testing Purpose Only
-    // @SubscribeMessage('newMessage')
-    // onNewMessage(@MessageBody() payload: any) {
-    //     this.server.emit('onMessage', {
-    //         msg: 'New Message',
-    //         content: payload
-    //     })    
-    //}
+      async handleDisconnect(client: any) {}
 
 }

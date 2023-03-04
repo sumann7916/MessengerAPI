@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { FriendshipModule } from './friendship/friendship.module';
 import { AuthModule } from './auth/auth.module';
 import { SocketModule } from './socket/socket.module';
+import { ChatModule } from './chat/chat.module';
 
 
 
@@ -19,6 +20,7 @@ import { SocketModule } from './socket/socket.module';
   FriendshipModule,
   AuthModule,
   SocketModule,
+  ChatModule,
 
   ],
   controllers: [AppController],

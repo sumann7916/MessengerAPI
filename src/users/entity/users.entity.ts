@@ -1,5 +1,6 @@
-import { BaseEntity, BeforeInsert, Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { BaseEntity, BeforeInsert, Column, CreateDateColumn, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import bcrypt from 'bcrypt';
+import { Conversation } from "src/chat/entity/conversation.entity";
 
 
 @Entity({name:'users'})
@@ -35,6 +36,9 @@ export class User extends BaseEntity {
   })
   receivedFriendRequests: User[];
 
+  @ManyToMany(() => Conversation, conversation => conversation.members)
+  @JoinTable()
+  conversations: Conversation[];
 
   @CreateDateColumn()
   createdAt: Date;
