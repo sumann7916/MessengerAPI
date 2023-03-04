@@ -1,8 +1,9 @@
 import { IsNotEmpty, IsUUID } from "class-validator";
 
-export class CreateConversationDto {
+export class ConversationDto {
     
     @IsUUID()
     @IsNotEmpty()
     id: string;
 }
+
