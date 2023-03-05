@@ -4,7 +4,7 @@ export class CreateMessageDto {
     
     @IsUUID()
     @IsNotEmpty()
-    conversationId: string
+    receiverId: string
 
     @IsNotEmpty()
     content: string

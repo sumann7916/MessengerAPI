@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Socket } from 'dgram';
+import { SocketService } from 'src/socket/socket.service';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
@@ -14,6 +16,8 @@ export class ChatService {
 
     constructor(
     private readonly userService: UsersService,
+    private readonly socketService: SocketService,
+
 
     @InjectRepository(Conversation)
     private conversationRepository: Repository<Conversation>,
@@ -117,22 +121,26 @@ export class ChatService {
         
         //Check if user and conversationId is valid
         const sender = await this.userService.findById(user.id)
-    
+        const receiver = await this.userService.findById(payload.receiverId)
+
+        if(!sender || !receiver){
+            throw new NotFoundException("No such users")
+        }
+        
+        let conversation;
         
         
-        //Checks if conversation exist where user is member of the conversation
-        const conversation = await this.conversationRepository
-        .createQueryBuilder('conversation')
-        .leftJoinAndSelect('conversation.members', 'members')
-        .where('conversation.id = :conversationId', { conversationId: payload.conversationId })
-        .andWhere('members.id = :userId', { userId: sender.id })
-        .getOne();        
-        
-    
-        
+        //Checks if conversation exist between them
+        conversation = await this.conversationRepository.createQueryBuilder('conversation')
+        .leftJoin('conversation.members', 'member1')
+        .leftJoin('conversation.members', 'member2')
+        .where('member1.id = :member1Id AND member2.id = :member2Id', { member1Id: sender.id, member2Id: receiver.id })
+        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', { member1Id: sender.id, member2Id: receiver.id })
+        .getOne();
 
         if(!conversation) {
-            throw new NotFoundException("Cant find such conversation")
+            //Create new conversation
+            conversation = await this.conversationRepository.save({members:[sender, receiver]});
         }
        
         //Create new message entity and save it
