@@ -5,5 +5,6 @@ import { createServer, Server as HttpServer } from 'http';
 @Injectable()
 export class SocketService {
   public socket: Server = null;
+  
 
 }

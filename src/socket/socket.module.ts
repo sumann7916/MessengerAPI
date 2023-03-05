@@ -10,6 +10,6 @@ import { SocketService } from './socket.service';
     UsersModule
   ],
   providers: [SocketService, SocketGateway],
-  exports: [SocketService]
+  exports: [SocketGateway]
 })
 export class SocketModule {}

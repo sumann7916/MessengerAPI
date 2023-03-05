@@ -16,7 +16,7 @@ import { SocketService } from "../socket.service";
 export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 
     // create an object to store the user ID and socket
-    private userSockets = {};
+    public userSockets = {};
 
     constructor(
         private socketService: SocketService,
@@ -92,14 +92,14 @@ export class SocketGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
       @SubscribeMessage('newMessage')
       async handleNewMessage(
-        @MessageBody() data: {recipientId: string, message: string},
-        @ConnectedSocket() senderSocket: Socket
+        @MessageBody() data: {senderId: string, recipientId: string, conversationId: string, message: string},
       )
       {
         const recipientSocket = this.userSockets[data.recipientId];
+        const senderSocket = this.userSockets[data.senderId]
         if(recipientSocket){
             //send message to recipient
-            recipientSocket.emit('newMessage', {senderId: senderSocket.data.userId, message: data.message})
+            recipientSocket.emit('newMessage', {senderId: senderSocket.data.userId, conversationId: data.conversationId, message: data.message})
         }
 
       }

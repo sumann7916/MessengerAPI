@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'dgram';
+import { SocketGateway } from 'src/socket/gateway/socket.gateway';
 import { SocketService } from 'src/socket/socket.service';
 import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
@@ -16,7 +17,7 @@ export class ChatService {
 
     constructor(
     private readonly userService: UsersService,
-    private readonly socketService: SocketService,
+    private readonly socketGateway: SocketGateway,
 
 
     @InjectRepository(Conversation)
@@ -149,9 +150,21 @@ export class ChatService {
             content: payload.content,
             conversation
         });
-        return this.messageRepository.save(message);
+        await this.messageRepository.save(message);
+    
+
+    //Emit message event to receiver's socket
+    const data = {
+        senderId: sender.id,
+        recipientId: receiver.id,
+        conversationId: conversation.id,
+        message: message.content
     }
 
+    this.socketGateway.handleNewMessage(data);
 
+    return message;
+
+}
 
 }
