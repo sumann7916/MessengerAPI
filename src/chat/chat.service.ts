@@ -92,7 +92,12 @@ export class ChatService {
 
     async deleteConversation(user:User, payload: ConversationDto): Promise<any>{
 
-        //Needs some checking
+        //Check if user exists
+        const foundUser = this.userService.findById(user.id)
+
+        if(!foundUser){
+            throw new NotFoundException("No user");
+        }
 
         //Check if conversation where user is a member exist
         const conversation = await this.conversationRepository
@@ -111,6 +116,31 @@ export class ChatService {
               await this.conversationRepository.delete(conversation.id);
             }
     }
+
+        //Get all messages of conversation
+        async getConversationMessages(user: User, conversationId: string): Promise<Message[]> {
+
+            //Check if user is part of conversation
+            const conversation = await this.conversationRepository
+            .createQueryBuilder('conversation')
+            .leftJoinAndSelect('conversation.members', 'members')
+            .where('conversation.id = :conversationId', { conversationId })
+            .andWhere('members.id = :userId', { userId: user.id })
+            .getOne();
+        
+            if(!conversation) {
+                throw new NotFoundException('No Conversation of that Id')
+            }
+
+            // Retrieve all messages of the conversation
+            const messages = await this.messageRepository.find({
+                where: { conversation: { id: conversationId } },
+                relations: ['sender'],
+                order: { createdAt: 'ASC' },
+            });
+            return messages;
+
+        }
 
 
 

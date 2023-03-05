@@ -37,4 +37,10 @@ export class ChatController {
     async sendMessage(@Request() req, @Body() payload: CreateMessageDto): Promise <Message> {
         return this.chatService.sendMessage(req.user, payload)
     }
-}
+
+    @Get('/getMessages/:conversationId')
+    @UsePipes(new ValidationPipe())
+    async getConversationMessages(@Request() req, @Param('conversationId') conversationId: string): Promise <Message[]> {
+        return this.chatService.getConversationMessages(req.user, conversationId);
+        
+    }}
