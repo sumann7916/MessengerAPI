@@ -2,6 +2,8 @@ import { Body, Controller, Post, UseGuards, UsePipes, ValidationPipe, Request, G
 import { JwtGuard } from 'src/@guards/jwt.guards';
 import { ChatService } from './chat.service';
 import { ConversationDto } from './dto/conversation.dto';
+import { CreateMessageDto } from './dto/message.dto';
+import { Message } from './entity/message.entity';
 
 
 @UseGuards(JwtGuard)
@@ -12,22 +14,27 @@ export class ChatController {
         private readonly chatService: ChatService
     ){}
 
-    @Post('/create')
+    @Post('/create-conversation')
     @UsePipes(new ValidationPipe())
     async createConversation(@Request() req, @Body() payload: ConversationDto): Promise<any>{
         return this.chatService.createConversation(req.user, payload);
     }
 
-    @Get('/')
+    @Get('/conversations')
     @UsePipes(new ValidationPipe())
     async getConversations(@Request() req): Promise<any>{
         return this.chatService.getConversations(req.user);
     }
     
-    @Delete('/')
+    @Delete('/conversations')
     @UsePipes(new ValidationPipe())
     async deleteConversation(@Request() req, @Body() payload: ConversationDto): Promise <any>{
         return this.chatService.deleteConversation(req.user, payload);
+    }
 
+    @Post('/send-message')
+    @UsePipes(new ValidationPipe())
+    async sendMessage(@Request() req, @Body() payload: CreateMessageDto): Promise <Message> {
+        return this.chatService.sendMessage(req.user, payload)
     }
 }

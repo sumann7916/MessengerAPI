@@ -4,18 +4,28 @@ import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { ConversationDto } from './dto/conversation.dto';
+import { CreateMessageDto } from './dto/message.dto';
 import { Conversation } from './entity/conversation.entity';
+import { Message } from './entity/message.entity';
 
 
 @Injectable()
 export class ChatService {
+
     constructor(
     private readonly userService: UsersService,
 
     @InjectRepository(Conversation)
-    private conversationRepository: Repository<Conversation>
+    private conversationRepository: Repository<Conversation>,
+
+    @InjectRepository(Message)
+    private messageRepository: Repository<Message>
+
 
     ){}
+
+    // ---------------------Conversation Service ----------------------
+
     async createConversation(user: User, payload:ConversationDto): Promise<any> {
 
             //Check if both of them are valid members
@@ -46,6 +56,21 @@ export class ChatService {
         return this.conversationRepository.save(conversation);
     }
 
+    //Get Conversation members by conversation Id
+    async getConversationMembersById(conversationId: string): Promise<User[]> {
+        const conversation = await this.conversationRepository
+          .createQueryBuilder('conversation')
+          .leftJoinAndSelect('conversation.members', 'members')
+          .where('conversation.id = :conversationId', { conversationId })
+          .getOne();
+      
+        if (!conversation) {
+          throw new NotFoundException(`Conversation with id ${conversationId} not found`);
+        }
+      
+        return conversation.members;
+      }
+
     //Get Conversations
     async getConversations(user:User): Promise<Conversation[]> {
         
@@ -56,24 +81,22 @@ export class ChatService {
 
     }
 
+    
+
     //Delete Conversation
 
     async deleteConversation(user:User, payload: ConversationDto): Promise<any>{
-        const conversation = await this.conversationRepository.findOne({
-            where: { id: payload.id },
-            relations: ['members'],
-          });
-          
-        // If conversation doesn't exist, throw error
-        if (!conversation) {
-            throw new NotFoundException(`Conversation with id not found`);
-        }
 
-        // If user is not a member of the conversation, throw error
-        if (!conversation.members.some(member => member.id === user.id)) {
-            throw new UnauthorizedException(`User is not a member of conversation`);
-        }
-        
+        //Needs some checking
+
+        //Check if conversation where user is a member exist
+        const conversation = await this.conversationRepository
+        .createQueryBuilder('conversation')
+        .leftJoinAndSelect('conversation.members', 'members')
+        .where('conversation.id = :conversationId', { conversationId: payload.id })
+        .andWhere('members.id = :userId', { userId: user.id })
+        .getOne();        
+         
         // If conversation has multiple members, remove user from members list
         if (conversation.members.length > 1) {
             conversation.members = conversation.members.filter(member => member.id !== user.id);
@@ -82,10 +105,45 @@ export class ChatService {
         else { // Otherwise, delete conversation
               await this.conversationRepository.delete(conversation.id);
             }
-  
-
-
     }
+
+
+
+    //---------------------------Messages Services -----------------------------
+
+    async sendMessage(user:User, payload: CreateMessageDto): Promise<Message> {
+        
+
+        
+        //Check if user and conversationId is valid
+        const sender = await this.userService.findById(user.id)
+    
+        
+        
+        //Checks if conversation exist where user is member of the conversation
+        const conversation = await this.conversationRepository
+        .createQueryBuilder('conversation')
+        .leftJoinAndSelect('conversation.members', 'members')
+        .where('conversation.id = :conversationId', { conversationId: payload.conversationId })
+        .andWhere('members.id = :userId', { userId: sender.id })
+        .getOne();        
+        
+    
+        
+
+        if(!conversation) {
+            throw new NotFoundException("Cant find such conversation")
+        }
+       
+        //Create new message entity and save it
+        const message = this.messageRepository.create({
+            sender,
+            content: payload.content,
+            conversation
+        });
+        return this.messageRepository.save(message);
+    }
+
 
 
 }
