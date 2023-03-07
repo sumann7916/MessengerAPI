@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'dgram';
+import { FriendshipService } from 'src/friendship/friendship.service';
 import { SocketGateway } from 'src/socket/gateway/socket.gateway';
 import { SocketService } from 'src/socket/socket.service';
 import { User } from 'src/users/entity/users.entity';
@@ -18,6 +19,7 @@ export class ChatService {
     constructor(
     private readonly userService: UsersService,
     private readonly socketGateway: SocketGateway,
+    private readonly friendshipService: FriendshipService,
 
 
     @InjectRepository(Conversation)
@@ -39,6 +41,11 @@ export class ChatService {
 
             if(!member1 || !member2) {
                 throw new BadRequestException("Users non-existent");
+            }
+
+            //Check if users are friends
+            if(!this.friendshipService.isFriendOf(member1.id, member2.id)) {
+                throw new UnauthorizedException("Can only create conversation with friends")
             }
 
             //Check if conversation between them already exists;
@@ -158,9 +165,14 @@ export class ChatService {
             throw new NotFoundException("No such users")
         }
         
-        let conversation;
-        
-        
+        let conversation:Conversation;
+
+        //Check if users are friends
+        const areFriends: boolean = await this.friendshipService.isFriendOf(sender.id, receiver.id)
+        if (!areFriends) {    
+          throw new UnauthorizedException('Can only send message to friends');
+        }
+  
         //Checks if conversation exist between them
         conversation = await this.conversationRepository.createQueryBuilder('conversation')
         .leftJoin('conversation.members', 'member1')

@@ -1,4 +1,4 @@
-import { Body, Injectable, Param } from '@nestjs/common';
+import { BadRequestException, Body, Injectable, NotFoundException, Param } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto} from './dto/user.dto';
@@ -29,7 +29,8 @@ export class UsersService {
     }
 
     async findByEmail(email: string): Promise<User> {
-        return await this.userRepository.findOne({where:{email: email}})
+      return await this.userRepository.findOne({ where: { email: email } });
     }
+
 
 }

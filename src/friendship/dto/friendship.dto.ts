@@ -14,5 +14,10 @@ export class CreateFriendshipDto{
 export class AcceptFriendshipDto {
     @IsNotEmpty()
     @IsUUID()
-    id:string
+    requestId:string
+
+    @IsNotEmpty()
+    @IsUUID()
+    user2Id:string
+
 }

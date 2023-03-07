@@ -1,7 +1,8 @@
-import { Body, Controller, Post, Req, Request, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Request, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtGuard } from 'src/@guards/jwt.guards';
 import { LocalAuthGuard } from 'src/@guards/local.guards';
+import { User } from 'src/users/entity/users.entity';
 import { AcceptFriendshipDto, CreateFriendshipDto } from './dto/friendship.dto';
 import { FriendshipService } from './friendship.service';
 
@@ -22,5 +23,11 @@ export class FriendshipController {
     @UsePipes(new ValidationPipe())
     async acceptRequest(@Request() req, @Body() payload: AcceptFriendshipDto): Promise<any>{
         return await this.friendshipService.acceptRequest(req.user, payload)
+    }
+
+    @Get('/getFriends')
+    @UsePipes(new ValidationPipe())
+    async getFriends(@Request() req):Promise <User []> {
+        return await this.friendshipService.getFriends(req.user.id)
     }
 }

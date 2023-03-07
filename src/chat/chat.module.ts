@@ -7,9 +7,10 @@ import { Conversation } from './entity/conversation.entity';
 import { Message } from './entity/message.entity';
 import { Socket } from 'dgram';
 import { SocketModule } from 'src/socket/socket.module';
+import { FriendshipModule } from 'src/friendship/friendship.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Conversation, Message]), UsersModule, SocketModule],
+  imports: [TypeOrmModule.forFeature([Conversation, Message]), UsersModule, SocketModule, FriendshipModule],
   providers: [ChatService],
   controllers: [ChatController]
 })
