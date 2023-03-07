@@ -8,9 +8,12 @@ export class Message extends BaseEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column()
+    @Column({ type: 'text', nullable: true })
     content: string;
 
+    @Column({ type: 'text', nullable: true })
+    image: string;
+    
     @ManyToOne(()=> User)
     sender: User
 

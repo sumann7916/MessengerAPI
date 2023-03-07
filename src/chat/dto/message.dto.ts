@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from "class-validator";
 
 export class CreateMessageDto {
     
@@ -9,4 +9,15 @@ export class CreateMessageDto {
     @IsNotEmpty()
     content: string
     
+}
+
+export class CreateFileAndMessageDto{
+    image: any;
+
+    @IsNotEmpty()
+    receiverId: string;
+
+    @IsOptional()
+    content: string;
+
 }

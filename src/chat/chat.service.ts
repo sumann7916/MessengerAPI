@@ -8,7 +8,7 @@ import { User } from 'src/users/entity/users.entity';
 import { UsersService } from 'src/users/users.service';
 import { Repository } from 'typeorm';
 import { ConversationDto } from './dto/conversation.dto';
-import { CreateMessageDto } from './dto/message.dto';
+import { CreateFileAndMessageDto, CreateMessageDto } from './dto/message.dto';
 import { Conversation } from './entity/conversation.entity';
 import { Message } from './entity/message.entity';
 
@@ -157,7 +157,7 @@ export class ChatService {
         
 
         
-        //Check if user and conversationId is valid
+        //Check if users are valid
         const sender = await this.userService.findById(user.id)
         const receiver = await this.userService.findById(payload.receiverId)
 
@@ -208,5 +208,54 @@ export class ChatService {
     return message;
 
 }
+
+    async sendFile(user:User, payload:CreateFileAndMessageDto, file:Express.Multer.File){
+
+        //Check if users are valid
+        const sender = await this.userService.findById(user.id)
+        const receiver = await this.userService.findById(payload.receiverId)
+
+        if(!sender || !receiver){
+            throw new NotFoundException("No such users")
+        }
+        
+        let conversation:Conversation;
+
+                //Check if users are friends
+                const areFriends: boolean = await this.friendshipService.isFriendOf(sender.id, receiver.id)
+                if (!areFriends) {    
+                  throw new UnauthorizedException('Can only send message to friends');
+                }
+          
+        //Checks if conversation exist between them
+        conversation = await this.conversationRepository.createQueryBuilder('conversation')
+        .leftJoin('conversation.members', 'member1')
+        .leftJoin('conversation.members', 'member2')
+        .where('member1.id = :member1Id AND member2.id = :member2Id', { member1Id: sender.id, member2Id: receiver.id })
+        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', { member1Id: sender.id, member2Id: receiver.id })
+        .getOne();
+
+        if(!conversation) {
+            //Create new conversation
+            conversation = await this.conversationRepository.save({members:[sender, receiver]});
+        }
+
+        //Save message
+        const message =  await this.messageRepository.save({
+            content: payload.content,
+            sender,
+            image:payload.image
+        }) 
+
+        const data = {
+            senderId: sender.id,
+            recipientId: receiver.id,
+            conversationId: conversation.id,
+            message: message.image
+        }
+    
+        this.socketGateway.handleNewMessage(data);
+        return message;
+    }
 
 }
