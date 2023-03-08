@@ -10,8 +10,9 @@ import { SocketModule } from 'src/socket/socket.module';
 import { FriendshipModule } from 'src/friendship/friendship.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Conversation, Message]), UsersModule, SocketModule, FriendshipModule],
+  imports: [TypeOrmModule.forFeature([Conversation, Message]), UsersModule, FriendshipModule],
   providers: [ChatService],
-  controllers: [ChatController]
+  controllers: [ChatController],
+  exports: [ChatService]
 })
 export class ChatModule {}

@@ -4,10 +4,10 @@ export class CreateMessageDto {
     
     @IsUUID()
     @IsNotEmpty()
-    receiverId: string
-
+    receiverId: string;
+    
     @IsNotEmpty()
-    content: string
+    content: string;
     
 }
 

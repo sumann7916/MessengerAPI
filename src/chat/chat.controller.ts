@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards, UsePipes, ValidationPipe, Request, Get, Delete, Param, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards, UsePipes, ValidationPipe, Request, Get, Delete, Param, UploadedFile, UseInterceptors, BadRequestException, Query, ParseIntPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtGuard } from 'src/@guards/jwt.guards';
 import { ChatService } from './chat.service';
@@ -35,32 +35,36 @@ export class ChatController {
         return await this.chatService.deleteConversation(req.user, payload);
     }
 
-    @Post('/send/message')
-    @UsePipes(new ValidationPipe())
-    async sendMessage(@Request() req, @Body() payload: CreateMessageDto): Promise <Message> {
-        return await this.chatService.sendMessage(req.user, payload)
-    }
+    // @Post('/send/message')
+    // @UsePipes(new ValidationPipe())
+    // async sendMessage(@Request() req, @Body() payload: CreateMessageDto): Promise <Message> {
+    //     return await this.chatService.sendMessage(req.user, payload)
+    // }
 
-    @Post('send/file')
-    @UsePipes(new ValidationPipe())
-    @UseInterceptors(
-        FileInterceptor('image', {
-          storage: diskStorage({
-            destination: 'static/chat',
-            filename,
-          }),
-          fileFilter: imageFileFilter,
-        }),)
+    // @Post('send/file')
+    // @UsePipes(new ValidationPipe())
+    // @UseInterceptors(
+    //     FileInterceptor('image', {
+    //       storage: diskStorage({
+    //         destination: 'static/chat',
+    //         filename,
+    //       }),
+    //       fileFilter: imageFileFilter,
+    //     }),)
         
-    async sendFile(@Request() req, @Body() payload: CreateFileAndMessageDto, @UploadedFile() file: Express.Multer.File){
-        if (!file) throw new BadRequestException({ message: 'Image is required.' });
-        payload.image = '/' + file.path;
-        return await this.chatService.sendFile(req.user, payload, file);
-    }
+    // async sendFile(@Request() req, @Body() payload: CreateFileAndMessageDto, @UploadedFile() file: Express.Multer.File){
+    //     if (!file) throw new BadRequestException({ message: 'Image is required.' });
+    //     payload.image = '/' + file.path;
+    //     return await this.chatService.sendFile(req.user, payload, file);
+    // }
 
-    @Get('/getMessages/:conversationId')
+    @Get('/:conversationId/messages')
     @UsePipes(new ValidationPipe())
-    async getConversationMessages(@Request() req, @Param('conversationId') conversationId: string): Promise <Message[]> {
-        return await this.chatService.getConversationMessages(req.user, conversationId);
+    async getConversationMessages(@Request() req, 
+    @Param('conversationId') conversationId: string, 
+    @Query('page', ParseIntPipe) page: number =1,
+    @Query('limit', ParseIntPipe) limit: number=10)
+    : Promise <any> {
+        return await this.chatService.getConversationMessages(req.user, conversationId, page, limit);
         
     }}

@@ -35,7 +35,6 @@ export class AuthController {
     @UseGuards(GoogleAuthGuard)
     @Get('/google/callback')
     async callback(@Request() req, @Res() res){
-
         const user =await this.userService.findByEmail(req.user.email)
         const jwt = await this.authService.generateToken(user);
         res.set('authorization', jwt.access_token);
@@ -44,7 +43,7 @@ export class AuthController {
 
     }
 
-    //Testinng purpose
+    //Testing purpose
     @UseGuards(JwtGuard)
     @Get('test123')
     async test (@Res() res){

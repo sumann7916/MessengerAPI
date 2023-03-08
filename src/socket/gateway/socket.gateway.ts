@@ -1,7 +1,9 @@
-import { OnModuleInit, UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
+import { BadRequestException, OnModuleInit, UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import {Server, Socket} from "socket.io"
+import { ChatService } from "src/chat/chat.service";
+import { CreateMessageDto } from "src/chat/dto/message.dto";
 import { JWT_SECRET } from "src/config";
 import { User } from "src/users/entity/users.entity";
 import { UsersService } from "src/users/users.service";
@@ -18,6 +20,7 @@ export class SocketGateway
     private socketService: SocketService,
     private jwtService: JwtService,
     private userService: UsersService,
+    private chatService: ChatService
   ) {}
   @WebSocketServer()
   public server: Server;
@@ -75,27 +78,57 @@ export class SocketGateway
     }
   }
 
-  //Handling new Message
-  @SubscribeMessage('newMessage')
-  async handleNewMessage(
-    @MessageBody()
-    data: {
-      senderId: string;
-      recipientId: string;
-      conversationId: string;
-      message: string;
-    },
+  // //Handling new Message
+  // @SubscribeMessage('newMessage')
+  // async handleNewMessage(
+  //   @MessageBody()
+  //   data: {
+  //     senderId: string;
+  //     recipientId: string;
+  //     conversationId: string;
+  //     message: string;
+  //   },
+  // ) {
+  //   const recipientSocket = this.userSockets[data.recipientId];
+  //   const senderSocket = this.userSockets[data.senderId];
+  //   if (recipientSocket) {
+  //     //send message to recipient
+  //     recipientSocket.emit('newMessage', {
+  //       senderId: senderSocket.data.userId,
+  //       conversationId: data.conversationId,
+  //       message: data.message,
+  //     });
+  //   }
+  // }
+
+  @SubscribeMessage('onMessage')
+  async onSendMessage(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() payload: CreateMessageDto,
   ) {
-    const recipientSocket = this.userSockets[data.recipientId];
-    const senderSocket = this.userSockets[data.senderId];
-    if (recipientSocket) {
-      //send message to recipient
-      recipientSocket.emit('newMessage', {
-        senderId: senderSocket.data.userId,
-        conversationId: data.conversationId,
-        message: data.message,
-      });
+      const message = await this.chatService.createMessage(socket.data.userId, payload);
+
+      if(!message){
+        throw new BadRequestException("Something went wrong")
+      }
+      if(message){
+        const senderSocket = this.userSockets[message.sender.id];
+        const recipientSocket = this.userSockets[payload.receiverId]
+      
+      senderSocket.emit('send-msg', {
+        senderId: socket.data.userId,
+        conversationId: message.conversation.id,
+        message: message.content
+      })
+      if(recipientSocket){
+        recipientSocket.emit("receive-msg", {
+        senderId: socket.data.userId,
+        conversationId: message.conversation.id,
+        message: message.content
+      })
+    }
     }
   }
 
-}
+  }
+

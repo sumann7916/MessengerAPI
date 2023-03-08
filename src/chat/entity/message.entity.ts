@@ -8,7 +8,7 @@ export class Message extends BaseEntity {
     @PrimaryGeneratedColumn('uuid')
     id: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({nullable: true })
     content: string;
 
     @Column({ type: 'text', nullable: true })
