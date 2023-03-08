@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, OnModuleInit, UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, Injectable, OnModuleInit, UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import {Server, Socket} from "socket.io"
@@ -10,6 +10,7 @@ import { UsersService } from "src/users/users.service";
 import { SocketService } from "../socket.service";
 
 @WebSocketGateway()
+@Injectable()
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -20,7 +21,7 @@ export class SocketGateway
     private socketService: SocketService,
     private jwtService: JwtService,
     private userService: UsersService,
-    private chatService: ChatService
+  
   ) {}
   @WebSocketServer()
   public server: Server;
@@ -106,8 +107,8 @@ export class SocketGateway
     @ConnectedSocket() socket: Socket,
     @MessageBody() payload: CreateMessageDto,
   ) {
-      const message = await this.chatService.createMessage(socket.data.userId, payload);
-
+     // const message = await this.chatService.createMessage(socket.data.userId, payload);
+      let message;
       if(!message){
         throw new BadRequestException("Something went wrong")
       }

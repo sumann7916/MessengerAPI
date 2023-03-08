@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { ChatModule } from 'src/chat/chat.module';
 import { UsersModule } from 'src/users/users.module';
@@ -12,6 +12,6 @@ import { SocketService } from './socket.service';
     ChatModule
   ],
   providers: [SocketService, SocketGateway],
-  exports: [SocketService]
+  exports: [SocketGateway]
 })
 export class SocketModule {}

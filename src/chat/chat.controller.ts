@@ -41,22 +41,21 @@ export class ChatController {
     //     return await this.chatService.sendMessage(req.user, payload)
     // }
 
-    // @Post('send/file')
-    // @UsePipes(new ValidationPipe())
-    // @UseInterceptors(
-    //     FileInterceptor('image', {
-    //       storage: diskStorage({
-    //         destination: 'static/chat',
-    //         filename,
-    //       }),
-    //       fileFilter: imageFileFilter,
-    //     }),)
-        
-    // async sendFile(@Request() req, @Body() payload: CreateFileAndMessageDto, @UploadedFile() file: Express.Multer.File){
-    //     if (!file) throw new BadRequestException({ message: 'Image is required.' });
-    //     payload.image = '/' + file.path;
-    //     return await this.chatService.sendFile(req.user, payload, file);
-    // }
+    @Post('send/file')
+    @UsePipes(new ValidationPipe())
+    @UseInterceptors(
+        FileInterceptor('image', {
+          storage: diskStorage({
+            destination: 'static/chat',
+            filename,
+          }),
+          fileFilter: imageFileFilter,
+        }),)     
+    async sendFile(@Request() req, @Body() payload: CreateFileAndMessageDto, @UploadedFile() file: Express.Multer.File){
+        if (!file) throw new BadRequestException({ message: 'Image is required.' });
+        payload.image = '/' + file.path;
+        return await this.chatService.sendFile(req.user, payload, file);
+    }
 
     @Get('/:conversationId/messages')
     @UsePipes(new ValidationPipe())

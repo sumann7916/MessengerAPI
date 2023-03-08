@@ -1,6 +1,7 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'dgram';
+import { send } from 'process';
 import { throwError } from 'rxjs';
 import { FriendshipService } from 'src/friendship/friendship.service';
 import { SocketGateway } from 'src/socket/gateway/socket.gateway';
@@ -20,6 +21,7 @@ export class ChatService {
     constructor(
     private readonly userService: UsersService,
     private readonly friendshipService: FriendshipService,
+    private readonly socketGateway: SocketGateway,
   
   
 
@@ -215,54 +217,64 @@ export class ChatService {
 
 
     async sendFile(user:User, payload:CreateFileAndMessageDto, file:Express.Multer.File){
+      //Check if users are valid
+      const sender = await this.userService.findById(user.id);
+      const receiver = await this.userService.findById(payload.receiverId);
 
-        //Check if users are valid
-        const sender = await this.userService.findById(user.id)
-        const receiver = await this.userService.findById(payload.receiverId)
+      if (!sender || !receiver) {
+        throw new NotFoundException('No such users');
+      }
 
-        if(!sender || !receiver){
-            throw new NotFoundException("No such users")
-        }
-        
-                // //Check if users are friends
-                // const areFriends: boolean = await this.friendshipService.isFriendOf(sender.id, receiver.id)
-                // if (!areFriends) {    
-                //   throw new UnauthorizedException('Can only send message to friends');
-                // }
-          
-        //Check if conversation between them already exists;
-        let conversation = await this.conversationRepository.createQueryBuilder('conversation')
+      // //Check if users are friends
+      // const areFriends: boolean = await this.friendshipService.isFriendOf(sender.id, receiver.id)
+      // if (!areFriends) {
+      //   throw new UnauthorizedException('Can only send message to friends');
+      // }
+
+      //Check if conversation between them already exists;
+      let conversation = await this.conversationRepository
+        .createQueryBuilder('conversation')
         .leftJoin('conversation.members', 'member1')
         .leftJoin('conversation.members', 'member2')
-        .where('member1.id = :member1Id AND member2.id = :member2Id', { member1Id: sender.id, member2Id: receiver.id })
-        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', { member1Id: sender.id, member2Id: receiver.id })
+        .where('member1.id = :member1Id AND member2.id = :member2Id', {
+          member1Id: sender.id,
+          member2Id: receiver.id,
+        })
+        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', {
+          member1Id: sender.id,
+          member2Id: receiver.id,
+        })
         .getOne();
-        console.log(conversation);
+      console.log(conversation);
 
-        if(!conversation) {
-            //Create new conversation
-            conversation = await this.conversationRepository.save({members:[sender, receiver]});
-        }
+      if (!conversation) {
+        //Create new conversation
+        conversation = await this.conversationRepository.save({
+          members: [sender, receiver],
+        });
+      }
 
-        //Save message
-        const message =  await this.messageRepository.save({
-            content: payload.content,
-            sender,
-            image:payload.image
-        }) 
+      //Save message
+      const message = await this.messageRepository.save({
+        content: payload.content,
+        sender,
+        image: payload.image,
+      });
 
-        const data = {
-            senderId: sender.id,
-            recipientId: receiver.id,
-            conversationId: conversation.id,
-            message: message.image
-        }
+      const data = {
+        senderId: sender.id,
+        recipientId: receiver.id,
+        conversationId: conversation.id,
+        message: message.image,
+      };
 
-      
-    
-        
-        return message;
-   }
+      const recipientSocket = this.socketGateway.userSockets[receiver.id]
+      const senderSocket = this.socketGateway.userSockets[sender.id]
+
+      recipientSocket.emit('receive-msg', data);
+      senderSocket.emit('send-msg', data);
+      return message;
+    }
 
         
 
