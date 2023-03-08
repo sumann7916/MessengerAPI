@@ -3,6 +3,7 @@
 # compiled output
 /dist
 /node_modules
+/static
 
 >>>>>>> c7a76ba (user creation and task route creation)
 # Logs

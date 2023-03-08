@@ -10,7 +10,6 @@ import { UsersService } from "src/users/users.service";
 import { SocketService } from "../socket.service";
 
 @WebSocketGateway()
-@Injectable()
 export class SocketGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
@@ -21,6 +20,8 @@ export class SocketGateway
     private socketService: SocketService,
     private jwtService: JwtService,
     private userService: UsersService,
+    @Inject(forwardRef(()=>ChatService))
+    private chatService: ChatService
   
   ) {}
   @WebSocketServer()
@@ -79,36 +80,13 @@ export class SocketGateway
     }
   }
 
-  // //Handling new Message
-  // @SubscribeMessage('newMessage')
-  // async handleNewMessage(
-  //   @MessageBody()
-  //   data: {
-  //     senderId: string;
-  //     recipientId: string;
-  //     conversationId: string;
-  //     message: string;
-  //   },
-  // ) {
-  //   const recipientSocket = this.userSockets[data.recipientId];
-  //   const senderSocket = this.userSockets[data.senderId];
-  //   if (recipientSocket) {
-  //     //send message to recipient
-  //     recipientSocket.emit('newMessage', {
-  //       senderId: senderSocket.data.userId,
-  //       conversationId: data.conversationId,
-  //       message: data.message,
-  //     });
-  //   }
-  // }
 
   @SubscribeMessage('onMessage')
   async onSendMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() payload: CreateMessageDto,
   ) {
-     // const message = await this.chatService.createMessage(socket.data.userId, payload);
-      let message;
+     const message = await this.chatService.createMessage(socket.data.userId, payload)
       if(!message){
         throw new BadRequestException("Something went wrong")
       }

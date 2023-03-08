@@ -147,7 +147,7 @@ export class ChatService {
           const messages = await this.messageRepository.find({
             where: { conversation: { id: conversationId } },
             relations: ['sender'],
-            order: { createdAt: 'ASC' },
+            order: { createdAt: 'DESC' },
             skip: offset,
             take: limit
         });
@@ -173,49 +173,48 @@ export class ChatService {
 
 
 
-    //---------------------------Messages Services -----------------------------
+    //---------------------------Messages Services ----------------------------
 
+    async createMessage(userId:string,payload:CreateMessageDto): Promise<Message>{
+      //Check if users are valid
+      const sender = await this.userService.findById(userId);
+      const receiver = await this.userService.findById(payload.receiverId);
 
-     async createMessage(userId: string, payload: CreateMessageDto): Promise <Message> {
-        
-        //Check if users are valid
-        const sender = await this.userService.findById(userId)
-        const receiver = await this.userService.findById(payload.receiverId)
-        if(!sender || !receiver) {
-          throw new NotFoundException('No Such Users');
-        }
-        // //Check if users are friend
-        // const areFriends:boolean = await this.friendshipService.isFriendOf(sender.id, receiver.id)
-        // if(!areFriends){
-        //     throw new UnauthorizedException("Can only send message to friends")
-        // }
-        //Check if conversation between them already exists;
-        let conversation = await this.conversationRepository.createQueryBuilder('conversation')
+      if (!sender || !receiver) {
+        throw new NotFoundException('No such users');
+      }
+
+      //Check if conversation between them already exists;
+      let conversation = await this.conversationRepository
+        .createQueryBuilder('conversation')
         .leftJoin('conversation.members', 'member1')
         .leftJoin('conversation.members', 'member2')
-        .where('member1.id = :member1Id AND member2.id = :member2Id', { member1Id: sender.id, member2Id: receiver.id })
-        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', { member1Id: sender.id, member2Id: receiver.id })
-        .getOne();
-        console.log(conversation);
-        
-
-      if (!conversation) {
-        conversation = await this.conversationRepository.save({
-          members: [sender, receiver],
-        });
-      }
-        ;
-        
-        
-        //Create new message entity and save
-        return this.messageRepository.save({
-            sender,
-            content: payload.content,
-            conversation
+        .where('member1.id = :member1Id AND member2.id = :member2Id', {
+          member1Id: sender.id,
+          member2Id: receiver.id,
         })
-     }
+        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', {
+          member1Id: sender.id,
+          member2Id: receiver.id,
+        })
+        .getOne();
 
+        if (!conversation) {
+          //Create new conversation
+          conversation = await this.conversationRepository.save({
+            members: [sender, receiver],
+          });
+        }
+        const message = await this.messageRepository.save({
+          sender,
+          conversation,
+          content: payload.content,
+        });
 
+        return message;
+  
+  
+    }
     async sendFile(user:User, payload:CreateFileAndMessageDto, file:Express.Multer.File){
       //Check if users are valid
       const sender = await this.userService.findById(user.id);
@@ -245,7 +244,6 @@ export class ChatService {
           member2Id: receiver.id,
         })
         .getOne();
-      console.log(conversation);
 
       if (!conversation) {
         //Create new conversation
@@ -265,7 +263,7 @@ export class ChatService {
         senderId: sender.id,
         recipientId: receiver.id,
         conversationId: conversation.id,
-        message: message.image,
+        image: message.image,
       };
 
       const recipientSocket = this.socketGateway.userSockets[receiver.id]

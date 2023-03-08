@@ -9,7 +9,7 @@ import { SocketService } from './socket.service';
   imports: [
     JwtModule.register({}),
     UsersModule,
-    ChatModule
+    forwardRef(()=>ChatModule)
   ],
   providers: [SocketService, SocketGateway],
   exports: [SocketGateway]
