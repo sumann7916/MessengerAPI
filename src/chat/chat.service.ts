@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'dgram';
 import { throwError } from 'rxjs';
@@ -20,7 +20,8 @@ export class ChatService {
     constructor(
     private readonly userService: UsersService,
     private readonly friendshipService: FriendshipService,
-
+  
+  
 
     @InjectRepository(Conversation)
     private conversationRepository: Repository<Conversation>,
@@ -127,46 +128,46 @@ export class ChatService {
         //Get all messages of conversation
         async getConversationMessages(user: User, conversationId: string, page:number, limit:number): Promise<any> {
 
-            //Check if user is part of conversation
-            const conversation = await this.conversationRepository
-            .createQueryBuilder('conversation')
-            .leftJoinAndSelect('conversation.members', 'members')
-            .where('conversation.id = :conversationId', { conversationId })
-            .andWhere('members.id = :userId', { userId: user.id })
-            .getOne();
-        
-            if(!conversation) {
-                throw new NotFoundException('No Conversation of that Id')
-            }
+          //Check if user is part of conversation
+          const conversation = await this.conversationRepository
+          .createQueryBuilder('conversation')
+          .leftJoinAndSelect('conversation.members', 'members')
+          .where('conversation.id = :conversationId', { conversationId })
+          .andWhere('members.id = :userId', { userId: user.id })
+          .getOne();
+      
+          if(!conversation) {
+              throw new NotFoundException('No Conversation of that Id')
+          }
 
-            //Calculate offset and retrieve message for current page
-            const offset = (page - 1) * limit;
-            const messages = await this.messageRepository.find({
-              where: { conversation: { id: conversationId } },
-              relations: ['sender'],
-              order: { createdAt: 'ASC' },
-              skip: offset,
-              take: limit
+          //Calculate offset and retrieve message for current page
+          const offset = (page - 1) * limit;
+          const messages = await this.messageRepository.find({
+            where: { conversation: { id: conversationId } },
+            relations: ['sender'],
+            order: { createdAt: 'ASC' },
+            skip: offset,
+            take: limit
+        });
+          // Calculate the total number of pages
+        const messageCount = await this.messageRepository.count({
+            where: { conversation: { id: conversationId } }
           });
-            // Calculate the total number of pages
-          const messageCount = await this.messageRepository.count({
-              where: { conversation: { id: conversationId } }
-            });
-          const lastPage = Math.ceil(messageCount / limit);
-            return {
-              messages,
-              page,
-              lastPage
-            }
-          // // Retrieve all messages of the conversation
-            // const messages = await this.messageRepository.find({
-            //     where: { conversation: { id: conversationId } },
-            //     relations: ['sender'],
-            //     order: { createdAt: 'ASC' },
-            // });
-            // return messages;
+        const lastPage = Math.ceil(messageCount / limit);
+          return {
+            messages,
+            page,
+            lastPage
+          }
+        // // Retrieve all messages of the conversation
+          // const messages = await this.messageRepository.find({
+          //     where: { conversation: { id: conversationId } },
+          //     relations: ['sender'],
+          //     order: { createdAt: 'ASC' },
+          // });
+          // return messages;
 
-        }
+      }
 
 
 
@@ -193,7 +194,7 @@ export class ChatService {
         .where('member1.id = :member1Id AND member2.id = :member2Id', { member1Id: sender.id, member2Id: receiver.id })
         .orWhere('member1.id = :member2Id AND member2.id = :member1Id', { member1Id: sender.id, member2Id: receiver.id })
         .getOne();
-
+        console.log(conversation);
         
 
       if (!conversation) {
@@ -211,6 +212,58 @@ export class ChatService {
             conversation
         })
      }
+
+
+    async sendFile(user:User, payload:CreateFileAndMessageDto, file:Express.Multer.File){
+
+        //Check if users are valid
+        const sender = await this.userService.findById(user.id)
+        const receiver = await this.userService.findById(payload.receiverId)
+
+        if(!sender || !receiver){
+            throw new NotFoundException("No such users")
+        }
+        
+                // //Check if users are friends
+                // const areFriends: boolean = await this.friendshipService.isFriendOf(sender.id, receiver.id)
+                // if (!areFriends) {    
+                //   throw new UnauthorizedException('Can only send message to friends');
+                // }
+          
+        //Check if conversation between them already exists;
+        let conversation = await this.conversationRepository.createQueryBuilder('conversation')
+        .leftJoin('conversation.members', 'member1')
+        .leftJoin('conversation.members', 'member2')
+        .where('member1.id = :member1Id AND member2.id = :member2Id', { member1Id: sender.id, member2Id: receiver.id })
+        .orWhere('member1.id = :member2Id AND member2.id = :member1Id', { member1Id: sender.id, member2Id: receiver.id })
+        .getOne();
+        console.log(conversation);
+
+        if(!conversation) {
+            //Create new conversation
+            conversation = await this.conversationRepository.save({members:[sender, receiver]});
+        }
+
+        //Save message
+        const message =  await this.messageRepository.save({
+            content: payload.content,
+            sender,
+            image:payload.image
+        }) 
+
+        const data = {
+            senderId: sender.id,
+            recipientId: receiver.id,
+            conversationId: conversation.id,
+            message: message.image
+        }
+
+      
+    
+        
+        return message;
+   }
+
         
 
 }

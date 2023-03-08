@@ -12,6 +12,6 @@ import { SocketService } from './socket.service';
     ChatModule
   ],
   providers: [SocketService, SocketGateway],
-  exports: [SocketGateway]
+  exports: [SocketService]
 })
 export class SocketModule {}

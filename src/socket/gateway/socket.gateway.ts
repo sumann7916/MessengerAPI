@@ -1,4 +1,4 @@
-import { BadRequestException, OnModuleInit, UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
+import { BadRequestException, forwardRef, Inject, OnModuleInit, UseFilters, UsePipes, ValidationPipe } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import {Server, Socket} from "socket.io"
